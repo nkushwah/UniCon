@@ -6,9 +6,16 @@ import parselogic.model.AttributeData;
 import parselogic.model.NodeData;
 import parselogic.model.XmlData;
 
+import javax.xml.crypto.dsig.TransformException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,9 +26,10 @@ import java.util.List;
  */
 public class XmlNodeParser {
 
+    private static String location = "D:/javaprojectfiles/test/applicationContext.xml";
     public static void main(String[] args ) throws Exception {
         XmlNodeParser xmlNodeParser = new XmlNodeParser();
-        xmlNodeParser.parseXMLFile("D:/javaprojectfiles/test/applicationContext.xml");
+        xmlNodeParser.parseXMLFile(location);
     }
 
     public void parseXMLFile(String filePath) throws IOException, SAXException, ParserConfigurationException, org.xml.sax.SAXException {
@@ -35,6 +43,9 @@ public class XmlNodeParser {
 
         //Here comes the root node
         Element root = document.getDocumentElement();
+            root.getAttributeNode("id").setValue("FUCK");
+
+        saveChangedData(document , location);
         System.out.println(root.getNodeName());
 
         XmlData xmlData = new XmlData();
@@ -42,9 +53,51 @@ public class XmlNodeParser {
         NodeList nList = document.getElementsByTagName("bean");
 
         List<NodeData> beanList = visitChildNodes(nList);
+
         xmlData.getNodes().addAll(beanList);
         System.out.println("EOF");
     }
+
+    private void changeBean(Document doc ) {
+
+
+    }
+
+    private void addBean(Document doc) {
+
+    }
+
+    private void deleteBean(Node node ){
+        while(node.hasChildNodes()){
+            NodeList nList = node.getChildNodes();
+            int index = node.getChildNodes().getLength() - 1;
+
+            Node n = nList.item(index);
+            deleteBean(n);
+            node.removeChild(n);
+        }
+
+    }
+
+
+
+
+    private void saveChangedData(Document doc , String filePath) {
+        try {
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transFormer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(new File(filePath));
+            transFormer.transform(source, result);
+            System.out.println("SAVE DONE ");
+        } catch (TransformerConfigurationException ex ) {
+            ex.printStackTrace();
+        } catch (TransformerException ex ) {
+            ex.printStackTrace();
+        }
+
+    }
+
 
     /**
      * recursively visits child nodes to create XmlDataList
